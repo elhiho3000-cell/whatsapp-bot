@@ -4,11 +4,35 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
+// ──────────────────────────────────────────────
+// CLIENTES — agrega uno por cada cliente nuevo
+// Key = Phone Number ID que te da Meta al registrar el número
+// ──────────────────────────────────────────────
+const CLIENTES = {
+  // Número de prueba Meta (para testing)
+  "1247152665138001": {
+    nombre: "Clínica Dental Demo",
+    prompt:
+      "Eres el asistente virtual de una clínica dental de prueba. " +
+      "Responde siempre en español, de forma amable y profesional. " +
+      "Tus respuestas deben ser concisas: máximo 3 líneas.",
+  },
 
-const SYSTEM_PROMPT =
-  "Eres el asistente virtual de una clínica dental que atiende en todo México. " +
-  "Responde siempre en español, de forma amable y profesional. " +
-  "Tus respuestas deben ser concisas: máximo 3 líneas.";
+  // ── Agrega clientes reales así: ──────────────
+  // "PHONE_NUMBER_ID_DEL_CLIENTE": {
+  //   nombre: "Clínica Dental Sonrisa",
+  //   prompt:
+  //     "Eres el asistente virtual de Clínica Dental Sonrisa, " +
+  //     "ubicada en Av. Insurgentes 245, Culiacán, Sinaloa. " +
+  //     "Horario: lunes a viernes 9am-7pm, sábados 9am-2pm. " +
+  //     "Servicios: limpieza $400, extracción desde $500, blanqueamiento $1,800. " +
+  //     "Para citas pide nombre y horario disponible. " +
+  //     "Responde en español, amable, máximo 3 líneas.",
+  // },
+};
+
+const PROMPT_DEFAULT =
+  "Eres un asistente amable. Responde en español, máximo 3 líneas.";
 
 // ──────────────────────────────────────────────
 // GET /webhook  →  verificación del webhook Meta
@@ -31,34 +55,35 @@ app.get("/webhook", (req, res) => {
 // POST /webhook  →  mensajes entrantes
 // ──────────────────────────────────────────────
 app.post("/webhook", async (req, res) => {
-  // Meta espera 200 inmediato para no reintentar
   res.sendStatus(200);
 
   try {
     const body = req.body;
-
     if (body.object !== "whatsapp_business_account") return;
 
-    const entry   = body.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value   = changes?.value;
-    const message = value?.messages?.[0];
-
-    // Solo procesamos mensajes de texto
+    const entry    = body.entry?.[0];
+    const changes  = entry?.changes?.[0];
+    const value    = changes?.value;
+    const message  = value?.messages?.[0];
     if (!message || message.type !== "text") return;
 
-    const from    = message.from;           // número del cliente
-    const texto   = message.text.body;      // texto recibido
+    const from         = message.from;
+    const texto        = message.text.body;
+    const phoneNumberId = value?.metadata?.phone_number_id;
 
-    console.log(`📩 Mensaje de ${from}: ${texto}`);
+    // Buscar cliente por su Phone Number ID
+    const cliente = CLIENTES[phoneNumberId];
+    const systemPrompt = cliente?.prompt || PROMPT_DEFAULT;
+    const nombreCliente = cliente?.nombre || "Desconocido";
 
-    // ── 1. Llamar a Claude Haiku ──────────────
+    console.log(`📩 [${nombreCliente}] Mensaje de ${from}: ${texto}`);
+
     const respuesta = await axios.post(
       "https://api.anthropic.com/v1/messages",
       {
         model: "claude-haiku-4-5-20251001",
         max_tokens: 256,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: [{ role: "user", content: texto }],
       },
       {
@@ -72,10 +97,9 @@ app.post("/webhook", async (req, res) => {
     );
 
     const textoRespuesta = respuesta.data.content[0].text;
-    console.log(`🤖 Claude responde: ${textoRespuesta}`);
+    console.log(`🤖 [${nombreCliente}] Claude responde: ${textoRespuesta}`);
 
-    // ── 2. Enviar respuesta por WhatsApp ───────
-    await enviarMensaje(from, textoRespuesta);
+    await enviarMensaje(phoneNumberId, from, textoRespuesta);
 
   } catch (err) {
     console.error("❌ Error al procesar mensaje:", err.message);
@@ -84,39 +108,12 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-// Suscribir número de teléfono a webhooks de la app
-app.get("/setup-webhook", async (req, res) => {
-  try {
-    const r = await axios.post(
-      `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/subscribed_apps`,
-      {},
-      { headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}` } }
-    );
-    res.json({ ok: true, resultado: r.data });
-  } catch (err) {
-    res.json({ ok: false, error: err.message, detalle: err.response?.data });
-  }
-});
-
-// Endpoint de diagnóstico
-app.get("/test-claude", async (req, res) => {
-  try {
-    const r = await axios.post(
-      "https://api.anthropic.com/v1/messages",
-      { model: "claude-haiku-4-5-20251001", max_tokens: 10, messages: [{ role: "user", content: "di hola" }] },
-      { headers: { "x-api-key": process.env.CLAUDE_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" }, timeout: 30000 }
-    );
-    res.json({ ok: true, respuesta: r.data.content[0].text });
-  } catch (err) {
-    res.json({ ok: false, error: err.message, status: err.response?.status, detalle: err.response?.data });
-  }
-});
-
 // ──────────────────────────────────────────────
 // Función auxiliar: enviar mensaje por WhatsApp
+// Usa el phoneNumberId correcto para cada cliente
 // ──────────────────────────────────────────────
-async function enviarMensaje(destinatario, texto) {
-  const url = `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`;
+async function enviarMensaje(phoneNumberId, destinatario, texto) {
+  const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`;
 
   await axios.post(
     url,
@@ -136,10 +133,37 @@ async function enviarMensaje(destinatario, texto) {
 }
 
 // ──────────────────────────────────────────────
+// Diagnóstico: probar conexión con Claude
+// ──────────────────────────────────────────────
+app.get("/test-claude", async (req, res) => {
+  try {
+    const r = await axios.post(
+      "https://api.anthropic.com/v1/messages",
+      {
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 10,
+        messages: [{ role: "user", content: "di hola" }],
+      },
+      {
+        headers: {
+          "x-api-key": process.env.CLAUDE_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        timeout: 30000,
+      }
+    );
+    res.json({ ok: true, respuesta: r.data.content[0].text });
+  } catch (err) {
+    res.json({ ok: false, error: err.message, status: err.response?.status });
+  }
+});
+
+// ──────────────────────────────────────────────
 // Arrancar servidor
 // ──────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`📡 Webhook en http://localhost:${PORT}/webhook`);
+  console.log(`📡 Clientes configurados: ${Object.keys(CLIENTES).length}`);
 });
