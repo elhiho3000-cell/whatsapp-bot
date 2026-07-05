@@ -77,8 +77,9 @@ app.post("/webhook", async (req, res) => {
 
     // Buscar cliente por su Phone Number ID
     const cliente = CLIENTES[phoneNumberId];
-    const systemPrompt = cliente?.prompt || PROMPT_DEFAULT;
-    const nombreCliente = cliente?.nombre || "Desconocido";
+    const systemPrompt = cliente?.prompt || CLIENTES[process.env.PHONE_NUMBER_ID]?.prompt || PROMPT_DEFAULT;
+    const nombreCliente = cliente?.nombre || CLIENTES[process.env.PHONE_NUMBER_ID]?.nombre || "Demo";
+    const phoneIdEnvio = cliente ? phoneNumberId : process.env.PHONE_NUMBER_ID;
 
     console.log(`📩 [${nombreCliente}] Mensaje de ${from}: ${texto}`);
 
@@ -103,7 +104,7 @@ app.post("/webhook", async (req, res) => {
     const textoRespuesta = respuesta.data.content[0].text;
     console.log(`🤖 [${nombreCliente}] Claude responde: ${textoRespuesta}`);
 
-    await enviarMensaje(phoneNumberId, from, textoRespuesta);
+    await enviarMensaje(phoneIdEnvio, from, textoRespuesta);
 
   } catch (err) {
     console.error("❌ Error al procesar mensaje:", err.message);
