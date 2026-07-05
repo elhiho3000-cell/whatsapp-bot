@@ -84,6 +84,20 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
+// Suscribir número de teléfono a webhooks de la app
+app.get("/setup-webhook", async (req, res) => {
+  try {
+    const r = await axios.post(
+      `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/subscribed_apps`,
+      {},
+      { headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}` } }
+    );
+    res.json({ ok: true, resultado: r.data });
+  } catch (err) {
+    res.json({ ok: false, error: err.message, detalle: err.response?.data });
+  }
+});
+
 // Endpoint de diagnóstico
 app.get("/test-claude", async (req, res) => {
   try {
