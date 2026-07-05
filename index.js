@@ -79,8 +79,8 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
     console.error("❌ Error al procesar mensaje:", err.message);
-    console.error("❌ Error status:", err.status);
-    console.error("❌ Error detalle:", JSON.stringify(err.error || {}));
+    console.error("❌ HTTP status:", err.response?.status);
+    console.error("❌ Detalle:", JSON.stringify(err.response?.data || {}));
   }
 });
 
