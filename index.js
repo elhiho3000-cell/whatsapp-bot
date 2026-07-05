@@ -57,7 +57,7 @@ app.post("/webhook", async (req, res) => {
 
     // ── 1. Llamar a Claude Haiku ──────────────
     const respuesta = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-haiku-4-5",
       max_tokens: 256,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: texto }],
