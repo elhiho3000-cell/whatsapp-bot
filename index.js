@@ -1,12 +1,9 @@
 require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
-const Anthropic = require("@anthropic-ai/sdk");
-
 const app = express();
 app.use(express.json());
 
-const anthropic = new Anthropic({ apiKey: process.env.CLAUDE_API_KEY });
 
 const SYSTEM_PROMPT =
   "Eres el asistente virtual de una clínica dental que atiende en todo México. " +
@@ -56,14 +53,25 @@ app.post("/webhook", async (req, res) => {
     console.log(`📩 Mensaje de ${from}: ${texto}`);
 
     // ── 1. Llamar a Claude Haiku ──────────────
-    const respuesta = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      max_tokens: 256,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: texto }],
-    });
+    const respuesta = await axios.post(
+      "https://api.anthropic.com/v1/messages",
+      {
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 256,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: texto }],
+      },
+      {
+        headers: {
+          "x-api-key": process.env.CLAUDE_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        timeout: 30000,
+      }
+    );
 
-    const textoRespuesta = respuesta.content[0].text;
+    const textoRespuesta = respuesta.data.content[0].text;
     console.log(`🤖 Claude responde: ${textoRespuesta}`);
 
     // ── 2. Enviar respuesta por WhatsApp ───────
@@ -78,15 +86,27 @@ app.post("/webhook", async (req, res) => {
 
 // Endpoint de diagnóstico
 app.get("/test-claude", async (req, res) => {
+  const key = process.env.CLAUDE_API_KEY || "";
+  const keyInfo = {
+    longitud: key.length,
+    inicio: key.substring(0, 20),
+    fin: key.substring(key.length - 6),
+    tieneEspacios: key !== key.trim(),
+  };
   try {
     const r = await anthropic.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 10,
       messages: [{ role: "user", content: "di hola" }],
     });
-    res.json({ ok: true, respuesta: r.content[0].text });
+    const r = await axios.post(
+      "https://api.anthropic.com/v1/messages",
+      { model: "claude-haiku-4-5-20251001", max_tokens: 10, messages: [{ role: "user", content: "di hola" }] },
+      { headers: { "x-api-key": process.env.CLAUDE_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" }, timeout: 30000 }
+    );
+    res.json({ ok: true, respuesta: r.data.content[0].text });
   } catch (err) {
-    res.json({ ok: false, error: err.message, status: err.status, detalle: err.error });
+    res.json({ ok: false, error: err.message, status: err.response?.status, detalle: err.response?.data });
   }
 });
 
