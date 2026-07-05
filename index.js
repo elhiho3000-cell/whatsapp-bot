@@ -71,6 +71,22 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
     console.error("❌ Error al procesar mensaje:", err.message);
+    console.error("❌ Error status:", err.status);
+    console.error("❌ Error detalle:", JSON.stringify(err.error || {}));
+  }
+});
+
+// Endpoint de diagnóstico
+app.get("/test-claude", async (req, res) => {
+  try {
+    const r = await anthropic.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 10,
+      messages: [{ role: "user", content: "di hola" }],
+    });
+    res.json({ ok: true, respuesta: r.content[0].text });
+  } catch (err) {
+    res.json({ ok: false, error: err.message, status: err.status, detalle: err.error });
   }
 });
 
