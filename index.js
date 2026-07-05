@@ -86,19 +86,7 @@ app.post("/webhook", async (req, res) => {
 
 // Endpoint de diagnóstico
 app.get("/test-claude", async (req, res) => {
-  const key = process.env.CLAUDE_API_KEY || "";
-  const keyInfo = {
-    longitud: key.length,
-    inicio: key.substring(0, 20),
-    fin: key.substring(key.length - 6),
-    tieneEspacios: key !== key.trim(),
-  };
   try {
-    const r = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      max_tokens: 10,
-      messages: [{ role: "user", content: "di hola" }],
-    });
     const r = await axios.post(
       "https://api.anthropic.com/v1/messages",
       { model: "claude-haiku-4-5-20251001", max_tokens: 10, messages: [{ role: "user", content: "di hola" }] },
