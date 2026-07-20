@@ -1,1 +1,5 @@
-node_modules/ 
+node_modules/
+campaign-results.csv
+check-tier.js
+.env
+replies-notified.txt

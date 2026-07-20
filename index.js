@@ -22,6 +22,21 @@ const CLIENTES = {
       "Responde siempre en español, amable y profesional. Máximo 3 líneas por respuesta.",
   },
 
+  // Número real de Sitiolab — recibe respuestas a la campaña de marketing
+  "1121554081051619": {
+    nombre: "Sitiolab",
+    prompt:
+      "Eres el asistente de ventas de Sitiolab. Le acabas de mandar un mensaje de WhatsApp a este negocio ofreciéndole " +
+      "un asistente de WhatsApp con inteligencia artificial que responde preguntas y agenda citas automáticamente, las 24 horas. " +
+      "Si responden con interés (dicen que sí, hacen preguntas, piden más información), explícales brevemente cómo funciona: " +
+      "se conecta a su número de WhatsApp actual, responde con base en la información de su negocio (horarios, servicios, precios) " +
+      "y agenda citas sin que el dueño tenga que estar pendiente del celular todo el día. " +
+      "Costo aproximado: instalación desde $2,500 MXN, más una mensualidad desde $800 MXN que incluye actualizaciones menores. " +
+      "Si quieren seguir adelante, pide su nombre y giro del negocio para preparar una demo personalizada. " +
+      "Si dicen que no les interesa o piden que no les escriban más, agradece y despídete cordialmente sin insistir. " +
+      "Responde siempre en español, de forma natural, amable y breve (máximo 4 líneas). No repitas literalmente el mensaje que ya se les envió.",
+  },
+
   // ── Agrega clientes reales así: ──────────────
   // "PHONE_NUMBER_ID_DEL_CLIENTE": {
   //   nombre: "Clínica Dental Sonrisa",
@@ -37,6 +52,27 @@ const CLIENTES = {
 
 const PROMPT_DEFAULT =
   "Eres un asistente amable. Responde en español, máximo 3 líneas.";
+
+// ──────────────────────────────────────────────
+// Detección de respuestas automáticas de negocios
+// (para no contestarle a otro bot / autorespondedor)
+// ──────────────────────────────────────────────
+const PATRONES_AUTORESPUESTA = [
+  /gracias por comunicarte/i,
+  /gracias por tu mensaje/i,
+  /en este momento no (podemos|estamos)/i,
+  /no estamos disponibles/i,
+  /fuera de (nuestro )?horario/i,
+  /horario de atenci[oó]n/i,
+  /te responderemos (lo antes posible|tan pronto|en breve)/i,
+  /mensaje autom[aá]tico/i,
+  /respuesta autom[aá]tica/i,
+  /no podemos responder/i,
+];
+
+function esRespuestaAutomatica(texto) {
+  return PATRONES_AUTORESPUESTA.some((patron) => patron.test(texto));
+}
 
 // ──────────────────────────────────────────────
 // GET /webhook  →  verificación del webhook Meta
@@ -82,6 +118,11 @@ app.post("/webhook", async (req, res) => {
     const phoneIdEnvio = cliente ? phoneNumberId : process.env.PHONE_NUMBER_ID;
 
     console.log(`📩 [${nombreCliente}] Mensaje de ${from}: ${texto}`);
+
+    if (esRespuestaAutomatica(texto)) {
+      console.log(`⏭️  [${nombreCliente}] Parece autorespuesta de negocio, no contesto.`);
+      return;
+    }
 
     const respuesta = await axios.post(
       "https://api.anthropic.com/v1/messages",
@@ -136,6 +177,25 @@ async function enviarMensaje(phoneNumberId, destinatario, texto) {
     }
   );
 }
+
+// ──────────────────────────────────────────────
+// Suscribir un número de teléfono a los webhooks de la app
+// Uso: GET /setup-webhook?phone_number_id=XXXXXXXXXX
+// (si se omite el query param, usa PHONE_NUMBER_ID del .env)
+// ──────────────────────────────────────────────
+app.get("/setup-webhook", async (req, res) => {
+  const phoneNumberId = req.query.phone_number_id || process.env.PHONE_NUMBER_ID;
+  try {
+    const r = await axios.post(
+      `https://graph.facebook.com/v19.0/${phoneNumberId}/subscribed_apps`,
+      {},
+      { headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}` } }
+    );
+    res.json({ ok: true, phoneNumberId, resultado: r.data });
+  } catch (err) {
+    res.json({ ok: false, phoneNumberId, error: err.message, detalle: err.response?.data });
+  }
+});
 
 // ──────────────────────────────────────────────
 // Diagnóstico: probar conexión con Claude
