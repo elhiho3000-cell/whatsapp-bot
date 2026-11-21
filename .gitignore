@@ -3,3 +3,4 @@ campaign-results.csv
 check-tier.js
 .env
 replies-notified.txt
+data/
