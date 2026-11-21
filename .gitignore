@@ -4,3 +4,4 @@ check-tier.js
 .env
 replies-notified.txt
 data/
+.claude/settings.local.json

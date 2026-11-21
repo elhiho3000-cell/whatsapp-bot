@@ -142,7 +142,7 @@ async function sendTemplate(item) {
     },
   };
   return axios.post(
-    `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
+    `https://graph.facebook.com/${process.env.GRAPH_VERSION || "v23.0"}/${process.env.PHONE_NUMBER_ID}/messages`,
     payload,
     {
       headers: {

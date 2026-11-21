@@ -45,6 +45,21 @@ const historialRate = new Map();  // clave → [timestamps]
 
 const claveDe = (phoneId, contacto) => `${phoneId}:${contacto}`;
 
+// México: WhatsApp entrega los números como 521 + 10 dígitos, pero al enviar
+// hay que usar 52 + 10 dígitos (el "1" de celular desapareció en 2019 y Meta
+// rechaza el formato viejo, sobre todo con números de prueba). Normalizamos
+// todo a 52XXXXXXXXXX para que envíos, pausas y comandos usen la misma clave.
+function normalizarNumero(n) {
+  const d = String(n || "").replace(/\D/g, "");
+  return /^521\d{10}$/.test(d) ? "52" + d.slice(3) : d;
+}
+
+// Lo que escribe el dueño en un comando: acepta "667 123 4567", "+52 1 667…", etc.
+function numeroDeComando(arg) {
+  const d = String(arg || "").replace(/\D/g, "");
+  return normalizarNumero(/^\d{10}$/.test(d) ? "52" + d : d);
+}
+
 setInterval(() => {
   const ahora = Date.now();
   for (const [k, c] of conversaciones) if (ahora - c.ultimo > CONV_TTL_MS) conversaciones.delete(k);
@@ -338,8 +353,9 @@ async function procesarCola(clave) {
 // Comandos del dueño (mandados desde el número notificarA)
 // ──────────────────────────────────────────────
 async function manejarComando(ctx, texto) {
-  const [cmd, arg] = texto.trim().split(/\s+/);
-  const numero = (arg || "").replace(/\D/g, "");
+  const [cmd, ...resto] = texto.trim().split(/\s+/);
+  const arg = resto.join(" ");
+  const numero = numeroDeComando(arg);
   let r;
 
   switch (cmd.toLowerCase()) {
@@ -410,7 +426,7 @@ async function marcarLeido(phoneNumberId, messageId) {
 }
 
 async function avisarDueno(ctx, texto) {
-  const dueno = ctx.cliente.notificarA;
+  const dueno = normalizarNumero(ctx.cliente.notificarA);
   if (!dueno) {
     console.log(`📣 [${ctx.cliente.nombre}] (sin notificarA configurado) ${texto}`);
     return;
@@ -496,7 +512,7 @@ async function manejarMensaje(message, value) {
   vistos.set(message.id, Date.now());
 
   const phoneNumberId = value?.metadata?.phone_number_id;
-  const contacto = message.from;
+  const contacto = normalizarNumero(message.from);
 
   // Si el número no está configurado, se usa el del .env (útil para pruebas)
   const clienteId = CLIENTES[phoneNumberId] ? phoneNumberId : process.env.PHONE_NUMBER_ID;
@@ -518,7 +534,7 @@ async function manejarMensaje(message, value) {
 
   console.log(`📩 [${cliente.nombre}] ${contacto}: ${texto}`);
 
-  if (cliente.notificarA && contacto === cliente.notificarA && texto.trim().startsWith("#")) {
+  if (cliente.notificarA && contacto === normalizarNumero(cliente.notificarA) && texto.trim().startsWith("#")) {
     return manejarComando(ctx, texto);
   }
 
