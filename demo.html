@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demo asistente WhatsApp</title>
+<style>
+  :root {
+    --bg: #efeae2; --header: #008069; --header-text: #fff; --me: #d9fdd3; --bot: #ffffff;
+    --text: #111b21; --muted: #667781; --input: #ffffff; --bar: #f0f2f5; --chip: #ffffff;
+    --event: #fff7d6; --event-border: #f0d676; --send: #00a884;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b141a; --header: #202c33; --header-text: #e9edef; --me: #005c4b; --bot: #202c33;
+      --text: #e9edef; --muted: #8696a0; --input: #2a3942; --bar: #202c33; --chip: #202c33;
+      --event: #3a3420; --event-border: #6b5d2a; --send: #00a884;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; height: 100dvh; max-width: 640px; margin: 0 auto;
+  }
+  header {
+    background: var(--header); color: var(--header-text);
+    padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+    padding-top: max(10px, env(safe-area-inset-top));
+  }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: #25d366; color: #fff;
+    display: grid; place-items: center; font-weight: 700; flex-shrink: 0;
+  }
+  header .info { flex: 1; min-width: 0; }
+  header h1 { font-size: 16px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header p { font-size: 12px; margin: 2px 0 0; opacity: .85; }
+  header button {
+    background: transparent; border: 1px solid currentColor; color: inherit; border-radius: 16px;
+    padding: 4px 10px; font-size: 12px; cursor: pointer; opacity: .9;
+  }
+  #chat { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .msg {
+    max-width: 82%; padding: 7px 10px 6px; border-radius: 8px; font-size: 15px; line-height: 1.35;
+    white-space: pre-wrap; word-wrap: break-word; box-shadow: 0 1px .5px rgba(0,0,0,.13);
+  }
+  .msg time { display: block; text-align: right; font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .yo { align-self: flex-end; background: var(--me); border-top-right-radius: 0; }
+  .bot { align-self: flex-start; background: var(--bot); border-top-left-radius: 0; }
+  .evento {
+    align-self: center; background: var(--event); border: 1px solid var(--event-border);
+    border-radius: 8px; padding: 8px 12px; font-size: 13px; max-width: 92%; margin: 4px 0;
+  }
+  .evento b { display: block; margin-bottom: 2px; }
+  .aviso { align-self: center; font-size: 12px; color: var(--muted); background: var(--bot); padding: 5px 10px; border-radius: 8px; text-align: center; }
+  .escribiendo { align-self: flex-start; background: var(--bot); padding: 10px 14px; border-radius: 8px; }
+  .escribiendo span { display: inline-block; width: 7px; height: 7px; margin: 0 2px; border-radius: 50%; background: var(--muted); animation: b 1.2s infinite; }
+  .escribiendo span:nth-child(2) { animation-delay: .2s; } .escribiendo span:nth-child(3) { animation-delay: .4s; }
+  @keyframes b { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+  #chips { display: flex; gap: 6px; overflow-x: auto; padding: 6px 16px 0; }
+  #chips button {
+    flex-shrink: 0; background: var(--chip); color: var(--text); border: 1px solid rgba(127,127,127,.3);
+    border-radius: 16px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+  }
+  form { display: flex; gap: 8px; padding: 8px 16px; background: var(--bar); padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  input {
+    flex: 1; min-width: 0; border: none; border-radius: 20px; padding: 10px 14px; font-size: 16px;
+    background: var(--input); color: var(--text); outline: none;
+  }
+  form button {
+    width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--send); color: #fff;
+    font-size: 18px; cursor: pointer; flex-shrink: 0;
+  }
+  form button:disabled { opacity: .5; }
+</style>
+</head>
+<body>
+<header>
+  <div class="avatar" id="inicial">·</div>
+  <div class="info">
+    <h1 id="nombre">Cargando…</h1>
+    <p>Asistente automático · responde al instante</p>
+  </div>
+  <button id="reiniciar" type="button">Reiniciar</button>
+</header>
+<div id="chat"></div>
+<div id="chips"></div>
+<form id="form">
+  <input id="texto" autocomplete="off" placeholder="Escribe un mensaje" maxlength="1000">
+  <button id="enviar" aria-label="Enviar">➤</button>
+</form>
+<script>
+  const params = new URLSearchParams(location.search);
+  const cliente = params.get("c") || "demo-lf-salon";
+  const chat = document.getElementById("chat");
+  const input = document.getElementById("texto");
+  const boton = document.getElementById("enviar");
+  const SUGERENCIAS = ["Hola, ¿qué horario tienen?", "¿Cuánto cuesta un tinte?", "Quiero agendar una cita", "Quiero hablar con una persona"];
+
+  const nuevaSesion = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)).replace(/[^\w-]/g, "");
+  let sesion;
+  try { sesion = sessionStorage.getItem("sesion-" + cliente); } catch {}
+  if (!sesion) { sesion = nuevaSesion(); try { sessionStorage.setItem("sesion-" + cliente, sesion); } catch {} }
+
+  const hora = () => new Date().toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+  function burbuja(texto, quien) {
+    const d = document.createElement("div");
+    d.className = "msg " + quien;
+    d.textContent = texto;
+    const t = document.createElement("time"); t.textContent = hora(); d.appendChild(t);
+    chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+  }
+  function nota(html, clase) {
+    const d = document.createElement("div"); d.className = clase; d.innerHTML = html;
+    chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+  }
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  function evento(e) {
+    if (e.herramienta === "registrar_cita") {
+      const d = e.datos || {};
+      nota(`<b>📅 Al dueño le llega por WhatsApp:</b>Nueva cita · ${esc(d.nombre_paciente)} · ${esc(d.motivo)} · ${esc(d.fecha_hora_preferida)}`, "evento");
+    } else if (e.herramienta === "transferir_a_humano") {
+      nota(`<b>🙋 Al dueño le llega por WhatsApp:</b>Un cliente necesita atención personal: ${esc(e.datos?.motivo)}<br>El bot deja de contestarle para que lo atienda una persona.`, "evento");
+    }
+  }
+
+  let escribiendo = null;
+  async function enviar(texto) {
+    texto = texto.trim(); if (!texto) return;
+    burbuja(texto, "yo"); input.value = ""; boton.disabled = true;
+    document.getElementById("chips").innerHTML = "";
+    escribiendo = document.createElement("div"); escribiendo.className = "escribiendo";
+    escribiendo.innerHTML = "<span></span><span></span><span></span>";
+    chat.appendChild(escribiendo); chat.scrollTop = chat.scrollHeight;
+    try {
+      const r = await fetch("/demo/mensaje", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ c: cliente, sesion, texto }) });
+      const j = await r.json().catch(() => ({}));
+      escribiendo.remove();
+      if (!r.ok) { nota(esc(j.error || "Ocurrió un error."), "aviso"); return; }
+      (j.eventos || []).forEach(evento);
+      if (j.respuesta) burbuja(j.respuesta, "bot");
+      if (j.pausado) nota("Esta conversación ya la tiene una persona del negocio. Toca «Reiniciar» para probar otra vez.", "aviso");
+    } catch {
+      escribiendo.remove(); nota("Sin conexión. Intenta de nuevo.", "aviso");
+    } finally { boton.disabled = false; input.focus(); }
+  }
+
+  function chips() {
+    const c = document.getElementById("chips"); c.innerHTML = "";
+    SUGERENCIAS.forEach((s) => { const b = document.createElement("button"); b.type = "button"; b.textContent = s; b.onclick = () => enviar(s); c.appendChild(b); });
+  }
+
+  document.getElementById("form").addEventListener("submit", (e) => { e.preventDefault(); enviar(input.value); });
+  document.getElementById("reiniciar").onclick = () => {
+    sesion = nuevaSesion(); try { sessionStorage.setItem("sesion-" + cliente, sesion); } catch {}
+    chat.innerHTML = ""; inicio();
+  };
+
+  function inicio() {
+    nota("Así contestaría el WhatsApp de tu negocio. Escribe como si fueras un cliente.", "aviso");
+    chips();
+  }
+
+  fetch("/demo/info?c=" + encodeURIComponent(cliente)).then((r) => r.ok ? r.json() : Promise.reject()).then((info) => {
+    document.getElementById("nombre").textContent = info.nombre;
+    document.getElementById("inicial").textContent = info.nombre.trim()[0] || "·";
+    document.title = info.nombre + " · WhatsApp";
+    inicio();
+  }).catch(() => { document.getElementById("nombre").textContent = "Demo no encontrada"; });
+</script>
+</body>
+</html>

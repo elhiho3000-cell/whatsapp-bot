@@ -162,7 +162,7 @@ const TOOL_INTERESADO = {
 };
 
 const herramientasDe = (cliente) =>
-  cliente.tipo === "clinica" ? [TOOL_CITA, TOOL_TRANSFERIR]
+  cliente.tipo === "clinica" || cliente.tipo === "citas" ? [TOOL_CITA, TOOL_TRANSFERIR]
   : cliente.tipo === "ventas" ? [TOOL_INTERESADO, TOOL_TRANSFERIR]
   : [TOOL_TRANSFERIR];
 
@@ -170,11 +170,19 @@ async function ejecutarHerramienta(nombre, input, ctx) {
   const { cliente, clienteId, contacto, phoneId, clave } = ctx;
   const base = { clienteId, cliente: cliente.nombre, contacto };
 
+  // En la página de demo no se guarda nada ni se avisa a nadie: solo se muestra qué pasaría.
+  if (ctx.demo) {
+    ctx.eventos.push({ herramienta: nombre, datos: input });
+    if (nombre === "registrar_cita") return "Solicitud registrada (demo). Dile al cliente que el negocio le confirmará.";
+    if (nombre === "transferir_a_humano") return "Transferido (demo). Avísale que una persona le escribirá pronto.";
+    return "Registrado (demo).";
+  }
+
   if (nombre === "registrar_cita") {
     guardarRegistro("citas", { ...base, ...input });
     await avisarDueno(ctx,
       `📅 Nueva solicitud de cita\n` +
-      `Paciente: ${input.nombre_paciente}\nMotivo: ${input.motivo}\n` +
+      `${cliente.tipo === "clinica" ? "Paciente" : "Cliente"}: ${input.nombre_paciente}\nMotivo: ${input.motivo}\n` +
       `Cuándo: ${input.fecha_hora_preferida}\n` +
       (input.notas ? `Notas: ${input.notas}\n` : "") +
       `WhatsApp: +${contacto}\n\nConfírmale directamente al paciente.`);
@@ -593,6 +601,53 @@ app.get("/setup-webhook", async (req, res) => {
     res.json({ ok: true, phoneNumberId, resultado: r.data });
   } catch (err) {
     res.json({ ok: false, phoneNumberId, error: err.message, detalle: err.response?.data });
+  }
+});
+
+// ──────────────────────────────────────────────
+// Página de demo para enseñar el bot a prospectos sin usar WhatsApp:
+//   https://<tu-app>/demo?c=demo-lf-salon
+// Usa Claude de verdad, así que tiene límite por sesión y por día.
+// ──────────────────────────────────────────────
+const DEMO_LIMITE_DIA = Number(process.env.DEMO_LIMITE_DIA || 300);
+let demoUso = { dia: "", mensajes: 0 };
+
+app.get("/demo", (_req, res) => res.sendFile(path.join(__dirname, "demo.html")));
+
+app.get("/demo/info", (req, res) => {
+  const c = CLIENTES[req.query.c];
+  if (!c || c.tipo === "ventas") return res.status(404).json({ error: "Demo no encontrada" });
+  res.json({ nombre: c.nombre, giro: c.datos?.giro || "", horario: c.datos?.horario || "" });
+});
+
+app.post("/demo/mensaje", async (req, res) => {
+  const { c, sesion, texto } = req.body || {};
+  const cliente = CLIENTES[c];
+  if (!cliente || cliente.tipo === "ventas") return res.status(404).json({ error: "Demo no encontrada" });
+  if (typeof texto !== "string" || !texto.trim() || texto.length > 1000 || !/^[\w-]{8,64}$/.test(sesion || "")) {
+    return res.status(400).json({ error: "Mensaje inválido" });
+  }
+
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (demoUso.dia !== hoy) demoUso = { dia: hoy, mensajes: 0 };
+  const clave = claveDe("demo", `${c}:${sesion}`);
+  if (demoUso.mensajes >= DEMO_LIMITE_DIA || excedeLimite(clave)) {
+    return res.status(429).json({ error: "La demo alcanzó su límite por hoy. Intenta más tarde." });
+  }
+  demoUso.mensajes++;
+
+  if (pausas.has(clave) && Date.now() < pausas.get(clave)) {
+    return res.json({ respuesta: null, eventos: [], pausado: true });
+  }
+
+  const ctx = { cliente, clienteId: c, contacto: "demo", phoneId: "demo", clave, demo: true, eventos: [] };
+  try {
+    const respuesta = await responderConClaude(ctx, texto.trim());
+    const transferido = ctx.eventos.some((e) => e.herramienta === "transferir_a_humano");
+    if (transferido) pausas.set(clave, Date.now() + 30 * 60 * 1000);
+    res.json({ respuesta, eventos: ctx.eventos });
+  } catch {
+    res.status(502).json({ error: "No pude responder en este momento. Intenta de nuevo." });
   }
 });
 

@@ -2,7 +2,8 @@
 // CLIENTES — agrega uno por cada cliente nuevo
 // Key = Phone Number ID que te da Meta al registrar el número
 //
-// tipo "clinica": el bot contesta dudas y registra solicitudes de cita.
+// tipo "clinica": consultorio dental; el bot contesta dudas y registra solicitudes de cita.
+// tipo "citas":   cualquier negocio con citas (salón, spa, estética, veterinaria…).
 // tipo "ventas":  el bot atiende respuestas a campañas y registra interesados.
 //
 // notificarA: número (con lada, sin "+") del dueño. Ahí llegan los avisos
@@ -46,11 +47,38 @@ const CLIENTES = {
       "Si responden con interés (dicen que sí, hacen preguntas, piden más información), explícales brevemente cómo funciona: " +
       "se conecta a su número de WhatsApp actual, responde con base en la información de su negocio (horarios, servicios, precios), " +
       "toma las solicitudes de cita y le avisa al dueño, para que no tenga que estar pendiente del celular todo el día. " +
-      "Costo aproximado: instalación desde $2,500 MXN, más una mensualidad desde $800 MXN que incluye actualizaciones menores. " +
+      "Costo: pago único de instalación desde $3,500 MXN, sin mensualidad. Si después quieren cambiar precios, horarios u otra información, " +
+      "cada cambio cuesta entre $150 y $300 MXN, solo cuando lo pidan. " +
       "Si quieren seguir adelante, pide su nombre y giro del negocio para preparar una demo personalizada; en cuanto los tengas, " +
       "usa la herramienta registrar_interesado. " +
       "Si dicen que no les interesa o piden que no les escriban más, agradece y despídete cordialmente sin insistir. " +
       "Responde siempre en español, de forma natural, amable y breve (máximo 4 líneas). No repitas literalmente el mensaje que ya se les envió.",
+  },
+
+  // ── DEMOS (no tienen número de WhatsApp; se prueban en /demo?c=<clave>) ──
+  "demo-lf-salon": {
+    tipo: "citas",
+    demo: true,
+    nombre: "LF Salon",
+    zonaHoraria: "America/Hermosillo",
+    datos: {
+      giro: "salón de belleza",
+      direccion: "Juárez 18, col. Bachoco, Hermosillo, Sonora",
+      horario: "lunes a sábado de 9am a 7pm, domingos cerrado",
+      telefono: "662-304-6766",
+      servicios: [
+        "Corte de cabello (dama, caballero, cortes para cabello rizado y ondulado)",
+        "Tinte y trabajos de color",
+        "Mechas y luces",
+        "Maquillaje",
+        "Peinados para evento",
+        "Venta de productos profesionales Avyna para el cuidado del cabello",
+      ],
+      precios:
+        "No tenemos lista de precios publicada. Los precios dependen del largo y estado del cabello: " +
+        "dile al cliente que en el salón se lo cotizan al momento y ofrécele agendar.",
+      extra: "Las clientas destacan la asesoría personalizada: recomiendan qué productos usar para que el color dure.",
+    },
   },
 
   // ── Agrega clientes reales así (copia el bloque de la clínica): ──
@@ -99,9 +127,44 @@ function promptClinica(c) {
     .join("\n");
 }
 
+// Para cualquier negocio que trabaja con citas: salón, spa, estética, veterinaria, barbería…
+function promptCitas(c) {
+  const d = c.datos;
+  return [
+    `Eres el asistente virtual por WhatsApp de ${c.nombre}${d.giro ? `, un ${d.giro}` : ""}.`,
+    "",
+    "INFORMACIÓN DEL NEGOCIO",
+    `- Dirección: ${d.direccion}`,
+    `- Horario: ${d.horario}`,
+    `- Teléfono: ${d.telefono}`,
+    d.formasDePago ? `- Formas de pago: ${d.formasDePago}` : null,
+    "- Servicios:",
+    ...d.servicios.map((s) => `  • ${s}`),
+    d.precios ? `- Precios: ${d.precios}` : null,
+    d.extra ? `- Otros datos: ${d.extra}` : null,
+    "",
+    "CÓMO ATENDER",
+    "- Responde en español, cálido y cercano, como la recepción del negocio. Máximo 3-4 líneas por mensaje. Sin markdown (no uses ** ni #). Puedes usar algún emoji con moderación.",
+    "- Usa solo la información de arriba. Si no sabes algo (un precio, si hacen cierto servicio, disponibilidad de un producto), no lo inventes: dilo y ofrece que el negocio le confirme.",
+    "- No prometas resultados exactos. Si el cliente tiene una molestia de salud (alergia, irritación, lesión), recomiéndale consultar a un profesional de la salud.",
+    "",
+    "AGENDAR CITAS",
+    "- Para agendar necesitas: nombre del cliente, servicio que quiere, y día/hora que prefiere. Pide solo lo que falte, de uno o dos datos a la vez.",
+    "- Verifica que el día y la hora estén dentro del horario. Si no, propón la opción más cercana.",
+    "- Interpreta fechas relativas (\"mañana\", \"el viernes\") con la fecha actual que viene en cada mensaje y confirma la fecha exacta con el cliente.",
+    "- Cuando tengas los datos y el cliente esté de acuerdo, usa registrar_cita. Después dile que su solicitud quedó registrada y que el negocio le confirmará por este medio. Nunca digas que la cita ya está confirmada.",
+    "",
+    "PASAR CON UNA PERSONA",
+    "- Si el cliente pide hablar con una persona, está molesto, o quiere algo que no puedes resolver (cambiar o cancelar una cita ya confirmada, una queja, un pedido especial), usa transferir_a_humano y dile que alguien del negocio le escribirá pronto.",
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
+}
+
 function systemPromptDe(cliente) {
   if (cliente.prompt) return cliente.prompt;
   if (cliente.tipo === "clinica") return promptClinica(cliente);
+  if (cliente.tipo === "citas") return promptCitas(cliente);
   return "Eres un asistente amable. Responde en español, máximo 3 líneas.";
 }
 
