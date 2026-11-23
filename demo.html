@@ -96,7 +96,7 @@
   const chat = document.getElementById("chat");
   const input = document.getElementById("texto");
   const boton = document.getElementById("enviar");
-  const SUGERENCIAS = ["Hola, ¿qué horario tienen?", "¿Cuánto cuesta un tinte?", "Quiero agendar una cita", "Quiero hablar con una persona"];
+  let SUGERENCIAS = ["Hola, ¿qué horario tienen?", "¿Qué servicios tienen?", "Quiero agendar una cita", "Quiero hablar con una persona"];
 
   const nuevaSesion = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)).replace(/[^\w-]/g, "");
   let sesion;
@@ -166,6 +166,7 @@
     document.getElementById("nombre").textContent = info.nombre;
     document.getElementById("inicial").textContent = info.nombre.trim()[0] || "·";
     document.title = info.nombre + " · WhatsApp";
+    if (Array.isArray(info.sugerencias) && info.sugerencias.length) SUGERENCIAS = info.sugerencias;
     inicio();
   }).catch(() => { document.getElementById("nombre").textContent = "Demo no encontrada"; });
 </script>

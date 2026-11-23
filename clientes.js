@@ -55,32 +55,6 @@ const CLIENTES = {
       "Responde siempre en español, de forma natural, amable y breve (máximo 4 líneas). No repitas literalmente el mensaje que ya se les envió.",
   },
 
-  // ── DEMOS (no tienen número de WhatsApp; se prueban en /demo?c=<clave>) ──
-  "demo-lf-salon": {
-    tipo: "citas",
-    demo: true,
-    nombre: "LF Salon",
-    zonaHoraria: "America/Hermosillo",
-    datos: {
-      giro: "salón de belleza",
-      direccion: "Juárez 18, col. Bachoco, Hermosillo, Sonora",
-      horario: "lunes a sábado de 9am a 7pm, domingos cerrado",
-      telefono: "662-304-6766",
-      servicios: [
-        "Corte de cabello (dama, caballero, cortes para cabello rizado y ondulado)",
-        "Tinte y trabajos de color",
-        "Mechas y luces",
-        "Maquillaje",
-        "Peinados para evento",
-        "Venta de productos profesionales Avyna para el cuidado del cabello",
-      ],
-      precios:
-        "No tenemos lista de precios publicada. Los precios dependen del largo y estado del cabello: " +
-        "dile al cliente que en el salón se lo cotizan al momento y ofrécele agendar.",
-      extra: "Las clientas destacan la asesoría personalizada: recomiendan qué productos usar para que el color dure.",
-    },
-  },
-
   // ── Agrega clientes reales así (copia el bloque de la clínica): ──
   // "PHONE_NUMBER_ID_DEL_CLIENTE": {
   //   tipo: "clinica",
@@ -89,6 +63,9 @@ const CLIENTES = {
   //   zonaHoraria: "America/Mazatlan",
   //   datos: { direccion, doctor, horario, telefono, servicios: [...], formasDePago, extra },
   // },
+
+  // Demos para prospectos (sin número de WhatsApp): viven en demos.js
+  ...require("./demos"),
 };
 
 // Reglas comunes para cualquier clínica. Se mantienen fijas para que el
@@ -131,12 +108,12 @@ function promptClinica(c) {
 function promptCitas(c) {
   const d = c.datos;
   return [
-    `Eres el asistente virtual por WhatsApp de ${c.nombre}${d.giro ? `, un ${d.giro}` : ""}.`,
+    `Eres el asistente virtual por WhatsApp de ${c.nombre}${d.giro ? ` (${d.giro})` : ""}.`,
     "",
     "INFORMACIÓN DEL NEGOCIO",
-    `- Dirección: ${d.direccion}`,
-    `- Horario: ${d.horario}`,
-    `- Teléfono: ${d.telefono}`,
+    d.direccion ? `- Dirección: ${d.direccion}` : null,
+    d.horario ? `- Horario: ${d.horario}` : null,
+    d.telefono ? `- Teléfono: ${d.telefono}` : null,
     d.formasDePago ? `- Formas de pago: ${d.formasDePago}` : null,
     "- Servicios:",
     ...d.servicios.map((s) => `  • ${s}`),
@@ -146,7 +123,9 @@ function promptCitas(c) {
     "CÓMO ATENDER",
     "- Responde en español, cálido y cercano, como la recepción del negocio. Máximo 3-4 líneas por mensaje. Sin markdown (no uses ** ni #). Puedes usar algún emoji con moderación.",
     "- Usa solo la información de arriba. Si no sabes algo (un precio, si hacen cierto servicio, disponibilidad de un producto), no lo inventes: dilo y ofrece que el negocio le confirme.",
-    "- No prometas resultados exactos. Si el cliente tiene una molestia de salud (alergia, irritación, lesión), recomiéndale consultar a un profesional de la salud.",
+    "- Si el cliente te escribe en inglés, contéstale en inglés.",
+    "- No prometas resultados exactos.",
+    ...(d.reglas || ["Si el cliente tiene una molestia de salud (alergia, irritación, lesión), recomiéndale consultar a un profesional de la salud."]).map((r) => `- ${r}`),
     "",
     "AGENDAR CITAS",
     "- Para agendar necesitas: nombre del cliente, servicio que quiere, y día/hora que prefiere. Pide solo lo que falte, de uno o dos datos a la vez.",

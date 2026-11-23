@@ -617,7 +617,7 @@ app.get("/demo", (_req, res) => res.sendFile(path.join(__dirname, "demo.html")))
 app.get("/demo/info", (req, res) => {
   const c = CLIENTES[req.query.c];
   if (!c || c.tipo === "ventas") return res.status(404).json({ error: "Demo no encontrada" });
-  res.json({ nombre: c.nombre, giro: c.datos?.giro || "", horario: c.datos?.horario || "" });
+  res.json({ nombre: c.nombre, giro: c.datos?.giro || "", horario: c.datos?.horario || "", sugerencias: c.sugerencias || [] });
 });
 
 app.post("/demo/mensaje", async (req, res) => {
