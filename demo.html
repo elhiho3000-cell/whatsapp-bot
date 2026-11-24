@@ -197,6 +197,7 @@
 <script>
   const params = new URLSearchParams(location.search);
   const cliente = params.get("c") || "demo-lf-salon";
+  const interno = params.has("interno"); // ?interno=1 → pruebas nuestras, no cuentan como visita
   const chat = document.getElementById("chat");
   const input = document.getElementById("texto");
   const boton = document.getElementById("enviar");
@@ -253,7 +254,7 @@
     escribiendo.innerHTML = "<span></span><span></span><span></span>";
     chat.appendChild(escribiendo); bajar(); estado.textContent = "escribiendo…";
     try {
-      const r = await fetch("/demo/mensaje", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ c: cliente, sesion, texto }) });
+      const r = await fetch("/demo/mensaje", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ c: cliente, sesion, texto, ...(interno ? { interno: 1 } : {}) }) });
       const j = await r.json().catch(() => ({}));
       escribiendo.remove();
       if (!r.ok) { nota(esc(j.error || "Ocurrió un error."), "aviso"); return; }

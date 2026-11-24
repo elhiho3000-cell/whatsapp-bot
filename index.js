@@ -617,14 +617,38 @@ const escHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<"
 // El nombre del negocio va en el HTML para que la vista previa del link
 // (Messenger, WhatsApp, Facebook) muestre "Así contestaría el WhatsApp de X".
 app.get("/demo", (req, res) => {
-  const c = CLIENTES[req.query.c || "demo-lf-salon"];
+  const clave = req.query.c || "demo-lf-salon";
+  const c = CLIENTES[clave];
   const nombre = c && c.tipo !== "ventas" ? c.nombre : "tu negocio";
+  if (c && c.tipo !== "ventas") eventoDemo(req, "abrió la demo", clave);
   const host = /^[\w.-]+(:\d+)?$/.test(req.get("host") || "") ? req.get("host") : "localhost";
   const base = `${/^(localhost|127\.)/.test(host) ? "http" : "https"}://${host}`;
   const html = fs.readFileSync(path.join(__dirname, "demo.html"), "utf8")
     .replaceAll("{{NOMBRE}}", escHtml(nombre))
     .replaceAll("{{BASE}}", base);
   res.type("html").send(html);
+});
+
+// Actividad en las demos: quién abre su link y qué le escribe al bot.
+// Se guarda en demo-actividad.jsonl y se imprime con la etiqueta DEMO_EVENTO
+// para poder seguirla con: railway logs --filter DEMO_EVENTO
+// No cuenta robots (vistas previas de Messenger/WhatsApp, curl) ni visitas con ?interno=1.
+const UA_ROBOT = /bot|crawl|spider|facebookexternalhit|facebot|whatsapp|telegram|slack|discord|skype|preview|curl|wget|python|axios|node-fetch|headless|lighthouse/i;
+function eventoDemo(req, tipo, c, extra = {}) {
+  const ua = req.get("user-agent") || "";
+  if (UA_ROBOT.test(ua) || req.query.interno || req.body?.interno) return;
+  const movil = /Mobi|Android|iPhone/i.test(ua);
+  const app = /FBAN|FBAV|FB_IAB|Messenger/i.test(ua) ? "Facebook/Messenger" : /Instagram/i.test(ua) ? "Instagram" : "navegador";
+  const reg = { tipo, demo: c, nombre: CLIENTES[c]?.nombre, dispositivo: movil ? "celular" : "computadora", app, ...extra, ua: ua.slice(0, 160) };
+  try { guardarRegistro("demo-actividad", reg); } catch (e) { console.error("No pude guardar actividad de demo:", e.message); }
+  console.log(`DEMO_EVENTO ${JSON.stringify(reg)}`);
+}
+
+// GET /admin/demo-actividad?token=...  (últimos eventos de las demos)
+app.get("/admin/demo-actividad", (req, res) => {
+  if (!process.env.ADMIN_TOKEN) return res.status(403).json({ error: "Define ADMIN_TOKEN para usar este endpoint" });
+  if (!autorizado(req, res)) return;
+  res.json(leerRegistros("demo-actividad", { limite: Number(req.query.limite) || 100 }));
 });
 
 app.get("/demo/logo.png", (_req, res) => res.sendFile(path.join(__dirname, "assets", "sitiolab-logo.png")));
@@ -650,6 +674,7 @@ app.post("/demo/mensaje", async (req, res) => {
     return res.status(429).json({ error: "La demo alcanzó su límite por hoy. Intenta más tarde." });
   }
   demoUso.mensajes++;
+  eventoDemo(req, "le escribió al bot", c, { sesion: sesion.slice(0, 8), texto: texto.trim().slice(0, 160) });
 
   if (pausas.has(clave) && Date.now() < pausas.get(clave)) {
     return res.json({ respuesta: null, eventos: [], pausado: true });
