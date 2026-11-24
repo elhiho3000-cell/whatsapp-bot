@@ -108,6 +108,23 @@
   .notif .tag { display: inline-block; font-size: 11px; font-weight: 700; color: #fff; background: #f15c6d; border-radius: 4px; padding: 1px 6px; margin-bottom: 4px; }
   .notif .nota { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
 
+  .intro {
+    align-self: stretch; background: var(--brand); color: var(--panel-text); border-radius: 12px;
+    padding: 12px 14px; margin: 0 0 8px; font-size: 13.5px; line-height: 1.45; box-shadow: var(--shadow);
+  }
+  .intro b { color: #fff; font-size: 14.5px; display: block; margin-bottom: 6px; }
+  .intro ul { list-style: none; margin: 0 0 8px; padding: 0; }
+  .intro li { padding-left: 20px; position: relative; margin: 2px 0; }
+  .intro li::before { content: "✓"; position: absolute; left: 2px; color: var(--accent); font-weight: 700; }
+  .intro .precio-m { color: var(--panel-muted); font-size: 12.5px; }
+  .intro .precio-m strong { color: #fff; }
+  .cta {
+    align-self: center; width: min(94%, 380px); margin: 10px 0 4px; padding: 10px 14px; border-radius: 12px;
+    background: var(--brand); color: var(--panel-text); font-size: 13.5px; line-height: 1.45; text-align: center;
+    animation: entra .25s ease-out;
+  }
+  .cta b { color: var(--accent); }
+  @media (min-width: 900px) { .intro { display: none; } }
   .aviso { align-self: center; font-size: 12.5px; color: var(--muted); background: var(--bot); padding: 6px 12px; border-radius: 8px; text-align: center; box-shadow: var(--shadow); margin: 6px 0; max-width: 92%; }
   .escribiendo { align-self: flex-start; background: var(--bot); padding: 12px 14px; border-radius: 8px; border-top-left-radius: 0; box-shadow: var(--shadow); margin-top: 4px; }
   .escribiendo span { display: inline-block; width: 7px; height: 7px; margin: 0 2px; border-radius: 50%; background: var(--muted); animation: b 1.2s infinite; }
@@ -240,9 +257,18 @@
         `${esc(d.nombre_paciente)}<br>${esc(d.motivo)}<br>${esc(d.fecha_hora_preferida)}`);
     } else if (e.herramienta === "transferir_a_humano") {
       const motivo = String(d.motivo || "");
-      notificacion("🙋 Un cliente necesita atención personal", esc(motivo.replace(/^URGENTE:\s*/i, "")) +
+      notificacion("🙋 Un cliente necesita atención personal", esc(motivo.replace(/^urgen\w*\s*[:.-]\s*/i, "")) +
         "<br>El asistente deja de contestarle para que lo atiendas tú.", /urgen/i.test(motivo));
+      transferido = true;
     }
+    mostrarCta();
+  }
+
+  let ctaMostrado = false, respuestasBot = 0, transferido = false;
+  function mostrarCta() {
+    if (ctaMostrado) return;
+    ctaMostrado = true;
+    setTimeout(() => nota("¿Te gustaría tenerlo en el WhatsApp de tu negocio? <b>Responde al mensaje donde te llegó este link</b> y te decimos cómo instalarlo.", "cta"), 600);
   }
 
   let escribiendo = null;
@@ -258,8 +284,10 @@
       const j = await r.json().catch(() => ({}));
       escribiendo.remove();
       if (!r.ok) { nota(esc(j.error || "Ocurrió un error."), "aviso"); return; }
-      if (j.respuesta) burbuja(j.respuesta, "bot");
+      if (j.respuesta) { burbuja(j.respuesta, "bot"); respuestasBot++; }
       (j.eventos || []).forEach(evento);
+      if (transferido) { transferido = false; nota("Desde aquí el asistente ya no le contesta a este cliente: el dueño toma la conversación. Toca ↻ arriba para probar otra cosa.", "aviso"); }
+      if (respuestasBot >= 3) mostrarCta();
       if (j.pausado) nota("Esta conversación ya la está atendiendo una persona del negocio. Toca ↻ arriba para empezar otra.", "aviso");
     } catch {
       escribiendo.remove(); nota("Sin conexión. Intenta de nuevo.", "aviso");
@@ -274,14 +302,16 @@
   document.getElementById("form").addEventListener("submit", (e) => { e.preventDefault(); enviar(input.value); });
   document.getElementById("reiniciar").onclick = () => {
     sesion = nuevaSesion(); try { sessionStorage.setItem("sesion-" + cliente, sesion); } catch {}
-    chat.innerHTML = ""; inicio();
+    chat.innerHTML = ""; ctaMostrado = false; respuestasBot = 0; transferido = false; inicio();
   };
 
   function inicio() {
+    nota(`<b>Así contestaría el WhatsApp de ${esc(NOMBRE)}</b><ul><li>Contesta al instante, 24/7, con tus horarios y servicios</li><li>Toma las citas y te las manda a tu WhatsApp</li><li>Si es urgencia, te avisa al momento</li></ul><span class="precio-m"><strong>Pago único desde $3,500 MXN</strong>, sin mensualidad. Pruébalo abajo como si fueras un cliente 👇</span>`, "intro");
     nota("Hoy", "dia");
     nota("🔒 Demo: nada de lo que escribas se guarda ni le llega a nadie. Las respuestas las genera la IA con la información pública del negocio.", "aviso");
     burbuja(`¡Hola! 👋 Soy el asistente virtual de ${NOMBRE}. ¿En qué te puedo ayudar?`, "bot");
     chips();
+    chat.style.scrollBehavior = "auto"; chat.scrollTop = 0; chat.style.scrollBehavior = ""; // que se vea la presentación
   }
 
   fetch("/demo/info?c=" + encodeURIComponent(cliente)).then((r) => r.ok ? r.json() : Promise.reject()).then((info) => {
