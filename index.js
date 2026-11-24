@@ -651,6 +651,27 @@ app.get("/admin/demo-actividad", (req, res) => {
   res.json(leerRegistros("demo-actividad", { limite: Number(req.query.limite) || 100 }));
 });
 
+// Propuesta de venta personalizada: https://<tu-app>/propuesta?c=<clave de la demo>
+app.get("/propuesta", (req, res) => {
+  const clave = String(req.query.c || "");
+  const c = CLIENTES[clave];
+  if (!c || c.tipo === "ventas") return res.status(404).type("text").send("Propuesta no encontrada");
+  eventoDemo(req, "abrió la propuesta", clave);
+  const d = c.datos || {};
+  const partes = [d.servicios?.length ? "servicios" : null, d.horario ? "horarios" : null, d.direccion ? "dirección" : null, "teléfono"].filter(Boolean);
+  const detalle = `Tus ${partes.slice(0, -1).join(", ")} y ${partes.at(-1)}, y las reglas de tu negocio (qué hacer con urgencias, cómo agendar, qué no prometer).`;
+  const fecha = new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: c.zonaHoraria || "America/Mexico_City" });
+  const host = /^[\w.-]+(:\d+)?$/.test(req.get("host") || "") ? req.get("host") : "localhost";
+  const base = `${/^(localhost|127\.)/.test(host) ? "http" : "https"}://${host}`;
+  const html = fs.readFileSync(path.join(__dirname, "propuesta.html"), "utf8")
+    .replaceAll("{{NOMBRE}}", escHtml(c.nombre))
+    .replaceAll("{{CLAVE}}", encodeURIComponent(clave))
+    .replaceAll("{{DETALLE_DATOS}}", escHtml(detalle))
+    .replaceAll("{{FECHA}}", escHtml(fecha))
+    .replaceAll("{{BASE}}", base);
+  res.type("html").send(html);
+});
+
 app.get("/demo/logo.png", (_req, res) => res.sendFile(path.join(__dirname, "assets", "sitiolab-logo.png")));
 
 app.get("/demo/info", (req, res) => {

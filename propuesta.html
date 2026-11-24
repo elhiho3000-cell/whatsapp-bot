@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propuesta para {{NOMBRE}} · Sitiolab</title>
+<meta name="description" content="Asistente de WhatsApp con inteligencia artificial para {{NOMBRE}}: qué incluye, inversión y cómo empezamos.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Propuesta para {{NOMBRE}}">
+<meta property="og:description" content="Asistente de WhatsApp para tu negocio: pago único, sin mensualidad.">
+<meta property="og:image" content="{{BASE}}/demo/logo.png">
+<meta name="theme-color" content="#0e2a1f">
+<link rel="icon" href="/demo/logo.png">
+<style>
+  :root {
+    --brand: #0e2a1f; --brand-2: #133826; --accent: #25d366; --accent-ink: #0b1f17;
+    --page: #f3f5f2; --card: #ffffff; --text: #14201a; --muted: #5d6b63; --line: #e2e8e4; --soft: #eef6f1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --page: #0b1411; --card: #111d18; --text: #e6efe9; --muted: #9db3a6; --line: #22332b; --soft: #14251d; }
+  }
+  :root[data-theme="dark"] { --page: #0b1411; --card: #111d18; --text: #e6efe9; --muted: #9db3a6; --line: #22332b; --soft: #14251d; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--text); line-height: 1.55;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;
+  }
+  .hero { background: radial-gradient(900px 500px at 15% 0%, var(--brand-2), var(--brand)); color: #e9f5ee; padding: 28px 16px 64px; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+  .logo small { display: block; font-size: 10px; letter-spacing: .14em; color: var(--accent); font-weight: 600; }
+  .mark { width: 32px; height: 32px; }
+  .hero h1 { font-size: clamp(26px, 5vw, 38px); line-height: 1.15; margin: 28px 0 10px; letter-spacing: -.01em; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { margin: 0; color: #a9c7b6; font-size: 16px; max-width: 560px; }
+  .meta { margin-top: 14px; font-size: 13px; color: #a9c7b6; }
+  main { padding: 0 16px 40px; margin-top: -40px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px 20px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.05); }
+  h2 { font-size: 19px; margin: 0 0 12px; }
+  ul.check { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  ul.check li { padding-left: 30px; position: relative; }
+  ul.check li::before {
+    content: "✓"; position: absolute; left: 0; top: 1px; width: 20px; height: 20px; border-radius: 6px;
+    background: var(--soft); color: #13a454; font-weight: 700; font-size: 13px; display: grid; place-items: center;
+  }
+  ul.check li b { display: block; }
+  ul.check li span { color: var(--muted); font-size: 14.5px; }
+  .precio { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .monto { font-size: 40px; font-weight: 800; letter-spacing: -.02em; line-height: 1; }
+  .monto small { font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+  .pill { display: inline-block; background: var(--soft); color: #13a454; font-weight: 700; font-size: 13px; border-radius: 999px; padding: 4px 10px; margin-top: 8px; }
+  .pagos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pago { border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .pago b { display: block; font-size: 20px; }
+  .pago span { color: var(--muted); font-size: 13.5px; }
+  .nota { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+  ol.pasos { padding-left: 20px; margin: 0; display: grid; gap: 8px; }
+  ol.pasos li::marker { color: #13a454; font-weight: 700; }
+  details { border-top: 1px solid var(--line); padding: 12px 0; }
+  details:first-of-type { border-top: none; padding-top: 0; }
+  summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  summary::after { content: "+"; color: var(--muted); font-weight: 400; }
+  details[open] summary::after { content: "–"; }
+  details p { margin: 8px 0 0; color: var(--muted); font-size: 14.5px; }
+  .cta { background: var(--brand); color: #e9f5ee; border: none; }
+  .cta h2 { color: #fff; }
+  .cta p { color: #a9c7b6; margin: 0 0 14px; }
+  .botones { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 11px 18px; font-weight: 700; font-size: 15px; text-decoration: none; cursor: pointer; border: none; font-family: inherit; }
+  .btn.primario { background: var(--accent); color: var(--accent-ink); }
+  .btn.sec { background: transparent; color: #e9f5ee; border: 1px solid rgba(255,255,255,.3); }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; padding: 8px 16px 32px; }
+  @media (min-width: 640px) {
+    .card { padding: 28px 30px; }
+    .precio { grid-template-columns: 1fr 1.2fr; align-items: center; }
+  }
+  @media print {
+    body { background: #fff; }
+    .hero { padding: 20px 0 30px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    main { margin-top: 0; padding: 0; }
+    .card { box-shadow: none; break-inside: avoid; }
+    .no-print { display: none !important; }
+    details { display: block; } details > * { display: block; }
+    .cta { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 64 64"><rect x="4" y="8" width="56" height="34" rx="9" fill="#25d366"/><path d="M22 41 L32 41 L32 56 Z" fill="#25d366"/><path d="M32 13 L35.5 22 L45 25 L35.5 28 L32 37 L28.5 28 L19 25 L28.5 22 Z" fill="#0b1f17"/></symbol>
+</svg>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="logo"><svg class="mark"><use href="#mark"/></svg><div>Sitiolab<small>ASISTENTES DE IA</small></div></div>
+    <h1>Propuesta para <span>{{NOMBRE}}</span></h1>
+    <p>Un asistente que contesta el WhatsApp de tu negocio al instante, toma las citas y te avisa cuando algo es urgente, para que no se te escape ningún cliente.</p>
+    <div class="meta">{{FECHA}} · Precio válido por 15 días</div>
+  </div>
+</section>
+
+<main class="wrap">
+  <section class="card">
+    <h2>Qué incluye</h2>
+    <ul class="check">
+      <li><b>Instalado en el WhatsApp de tu negocio</b><span>Tus clientes escriben al mismo número de siempre. Revisamos contigo cómo tienes tu número para conectarlo de la mejor forma.</span></li>
+      <li><b>Configurado con la información de {{NOMBRE}}</b><span>{{DETALLE_DATOS}}</span></li>
+      <li><b>Contesta a cualquier hora</b><span>De día, de noche y en días que no abren. Si te escriben en inglés, contesta en inglés.</span></li>
+      <li><b>Toma las citas por ti</b><span>Pide nombre, servicio y día, y te manda la solicitud a tu WhatsApp para que solo la confirmes.</span></li>
+      <li><b>Te avisa cuando importa</b><span>Si es una urgencia o el cliente pide hablar con alguien, te llega un aviso al momento y el asistente deja que tú tomes la conversación.</span></li>
+      <li><b>Tú tienes el control</b><span>Desde tu WhatsApp puedes ver las últimas citas, pausar el asistente con un cliente y reactivarlo.</span></li>
+      <li><b>Una semana de ajustes sin costo</b><span>Los primeros 7 días después de instalarlo afinamos las respuestas contigo sin cobrar nada extra.</span></li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Inversión</h2>
+    <div class="precio">
+      <div>
+        <div class="monto">$3,500 <small>MXN</small></div>
+        <div class="pill">Pago único · sin mensualidad</div>
+        <p class="nota">Después solo pagas si pides un cambio (precios, horarios, servicios): de $150 a $300 por cambio.</p>
+      </div>
+      <div class="pagos">
+        <div class="pago"><span>Para empezar</span><b>$1,750</b><span>50% de anticipo</span></div>
+        <div class="pago"><span>Al quedar funcionando</span><b>$1,750</b><span>50% restante</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Cómo empezamos</h2>
+    <ol class="pasos">
+      <li>Nos confirmas por mensaje y te mandamos los datos para el anticipo (transferencia o depósito).</li>
+      <li>Revisamos juntos tu información: servicios, precios que quieres que diga, horarios y a qué número te llegan los avisos.</li>
+      <li>Conectamos el asistente a tu WhatsApp. Necesitamos unos minutos contigo y el celular del negocio a la mano para el código de verificación.</li>
+      <li>Lo probamos juntos y, cuando estés conforme, queda funcionando. Ahí se paga el 50% restante.</li>
+    </ol>
+    <p class="nota">Tiempo normal: de 1 a 3 días hábiles desde el anticipo.</p>
+  </section>
+
+  <section class="card">
+    <h2>Preguntas frecuentes</h2>
+    <details><summary>¿Tengo que cambiar de número?</summary><p>No. La idea es que tus clientes te sigan escribiendo al mismo número. Antes de instalar revisamos cómo tienes tu WhatsApp (normal o Business) y te decimos exactamente qué pasos siguen.</p></details>
+    <details><summary>¿Y si el asistente se equivoca o no sabe algo?</summary><p>Solo contesta con la información que tú nos das. Si le preguntan algo que no sabe, no lo inventa: dice que lo confirmas tú o te pasa la conversación.</p></details>
+    <details><summary>¿Puedo seguir contestando yo?</summary><p>Sí. Cuando quieras atender a alguien personalmente, pausas el asistente para ese cliente y lo reactivas cuando termines. En urgencias se pausa solo.</p></details>
+    <details><summary>¿Las citas quedan confirmadas solas?</summary><p>No. El asistente toma la solicitud y te la manda; tú decides y confirmas. Así nunca se te empalman citas.</p></details>
+    <details><summary>¿Qué pasa si cambio precios u horarios?</summary><p>Nos mandas un mensaje con el cambio y lo actualizamos el mismo día o al siguiente, de $150 a $300 según el cambio.</p></details>
+    <details><summary>¿Hay algún otro cobro, de WhatsApp o del servidor?</summary><p>No te cobramos mensualidad: el servidor ya está incluido en el pago único. Responder los mensajes que te mandan tus clientes no tiene costo de WhatsApp.</p></details>
+    <details><summary>¿Necesito computadora o algo instalado?</summary><p>No. Todo funciona en internet; tú sigues usando tu celular como siempre.</p></details>
+  </section>
+
+  <section class="card cta">
+    <h2>¿Arrancamos?</h2>
+    <p>Respóndenos por el mismo medio donde te llegó esta propuesta con un “Sí, adelante” y te mandamos los datos para el anticipo.</p>
+    <div class="botones no-print">
+      <a class="btn primario" href="/demo?c={{CLAVE}}">Probar mi demo otra vez</a>
+      <button class="btn sec" type="button" onclick="window.print()">Guardar en PDF</button>
+    </div>
+  </section>
+</main>
+<footer>Sitiolab · Asistentes de IA para negocios · Propuesta preparada para {{NOMBRE}}</footer>
+</body>
+</html>
