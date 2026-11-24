@@ -14,7 +14,7 @@ const SUGERENCIAS_VET = [
 
 const REGLAS_VET = [
   "No des diagnósticos ni recomiendes medicamentos o dosis: eso solo lo puede hacer el veterinario después de revisar a la mascota.",
-  "Si describen una urgencia (no respira bien, sangra mucho, convulsiona, se envenenó o comió algo tóxico, la atropellaron, no puede levantarse), dile que la traiga de inmediato o llame al teléfono de la clínica, y usa transferir_a_humano.",
+  "Si describen una urgencia (no respira bien, sangra mucho, convulsiona, se envenenó o comió algo tóxico, la atropellaron, no puede levantarse), dile que la traiga de inmediato o llame al teléfono de la clínica, y SIEMPRE usa transferir_a_humano con el motivo empezando por \"URGENTE:\", aunque la clínica esté abierta: así el equipo se prepara antes de que llegue.",
   "Para agendar, además del nombre del dueño pregunta el nombre y la especie de la mascota (perro, gato, etc.) y ponlo en el servicio.",
 ];
 
@@ -132,5 +132,78 @@ module.exports = {
     telefono: "664-631-8716",
     servicios: ["Consulta veterinaria", "Hospital veterinario", "Limpieza dental", "Resonancia magnética", "Cirugía"],
     extra: "Atienden a muchos clientes de Estados Unidos.",
+  }),
+
+  // ── Tijuana: veterinarias, lote 2 ──
+  profauna: vet("Profauna Hospital Veterinario 24 Horas", {
+    direccion: "Blvd. Fundadores 3008, col. Juárez, Tijuana, B.C.",
+    horario: "abierto las 24 horas, todos los días",
+    telefono: "664-200-2451",
+    servicios: ["Consulta veterinaria", "Urgencias las 24 horas", "Radiografías", "Hospitalización y observación", "Vacunación y desparasitación"],
+  }),
+
+  "dr-zoo": vet("Clínica Veterinaria Dr Zoo", {
+    direccion: "Centro Comercial Pueblo Amigo, Paseo del Centenario 60, local 2, Zona Río, Tijuana, B.C.",
+    horario: "abierto las 24 horas, todos los días",
+    telefono: "664-607-7527",
+    servicios: ["Consulta veterinaria", "Urgencias las 24 horas", "Estética y peluquería canina (baño y corte)", "Limpieza dental", "Venta de medicamentos para mascotas"],
+  }),
+
+  raydog: vet("Urgencias Veterinarias RayDog y Estética", {
+    direccion: "Ruta Independencia, Matamoros, Tijuana, B.C.",
+    horario: "domingo a viernes de 9am a 10pm (lunes hasta 10:30pm), sábados cerrado",
+    telefono: "663-213-4278",
+    servicios: ["Urgencias veterinarias", "Consulta veterinaria", "Tratamiento de parvovirus y otras infecciones", "Estética para mascotas"],
+  }),
+
+  "vet-nn": vet("Centro Veterinario NN Dr. José J. Nájera", {
+    direccion: "Blvd. Gral. Rodolfo Sánchez Taboada 10512-4-B2, Zona Río, Tijuana, B.C.",
+    telefono: "664-971-0162",
+    servicios: ["Consulta veterinaria", "Oftalmología veterinaria (cataratas, retina)", "Cirugía", "Atención a razas delicadas como bulldog"],
+    extra: "No tenemos el horario publicado: si preguntan, ofrece que la clínica lo confirme o que llamen al teléfono.",
+  }),
+
+  "vet-perros-gatos": vet("Clínica Veterinaria Perros y Gatos", {
+    direccion: "Paseo Ensenada 1818, Playas de Tijuana, sección El Dorado, Tijuana, B.C.",
+    horario: "lunes a sábado de 9am a 5pm, domingos cerrado",
+    telefono: "664-427-0674",
+    servicios: ["Consulta veterinaria", "Esterilización", "Cirugía", "Baño para perros y gatos", "Vacunación y desparasitación"],
+  }),
+
+  "saturno-vet": vet("Clínica Veterinaria Saturno Vet", {
+    direccion: "Paseo Pedregal 2894, Playas de Tijuana, sección Costa Hermosa, Tijuana, B.C.",
+    horario: "lunes a viernes de 9am a 6pm, sábados de 9am a 5pm, domingos cerrado",
+    telefono: "664-133-6303",
+    servicios: ["Consulta veterinaria", "Atención a perros, gatos y conejos", "Cirugía", "Tratamientos dentales para conejos", "Vacunación y desparasitación"],
+  }),
+
+  "vet-gutierrez": vet("Veterinaria Gutiérrez", {
+    direccion: "Calle 7ma 8123, interior 103, Zona Centro, Tijuana, B.C.",
+    horario: "lunes a sábado de 9am a 6pm, domingos cerrado",
+    telefono: "664-638-4164",
+    servicios: ["Consulta veterinaria", "Cirugía (por ejemplo retiro de tumores)", "Medicamentos para pulgas, garrapatas y gusano del corazón", "Vacunación y desparasitación"],
+    formasDePago: "efectivo (confirma otras formas de pago con la clínica)",
+  }),
+
+  petmed: vet("Hospital Veterinario Petmed", {
+    direccion: "Fresnillo 2270, col. Madero (Cacho), Tijuana, B.C.",
+    horario: "lunes a viernes de 9am a 7pm, sábados de 9am a 5pm, domingos cerrado",
+    telefono: "664-381-3619",
+    servicios: ["Consulta veterinaria", "Odontología veterinaria (limpieza y extracciones)", "Ortopedia (lesiones de ligamentos)", "Seguimiento de enfermedades crónicas"],
+    extra: "Atienden a clientes que hablan inglés.",
+  }),
+
+  medivet: vet("Medivet Hospital Veterinario", {
+    direccion: "Calle Ing. Juan Ojeda Robles 340, Buena Vista, Tijuana, B.C.",
+    horario: "lunes a viernes de 9am a 6:30pm, sábados de 9am a 2pm, domingos cerrado",
+    telefono: "664-607-1684",
+    servicios: ["Consulta veterinaria", "Especialistas en animales exóticos (conejos, erizos y otros)", "Baño", "Vacunación y desparasitación"],
+  }),
+
+  "perro-andaluz": vet("Perro Andaluz Hospital Veterinario", {
+    direccion: "Blvd. Cuauhtémoc Sur Ote. 2920-5, col. Dávila, Tijuana, B.C.",
+    telefono: "664-208-5314",
+    servicios: ["Consulta veterinaria", "Cirugía y esterilización", "Spa, baño y estética", "Limpieza dental"],
+    extra: "No tenemos el horario publicado: si preguntan, ofrece que la clínica lo confirme o que llamen al teléfono.",
   }),
 };
