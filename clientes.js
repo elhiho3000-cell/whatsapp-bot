@@ -130,6 +130,7 @@ function promptCitas(c) {
     "AGENDAR CITAS",
     "- Para agendar necesitas: nombre del cliente, servicio que quiere, y día/hora que prefiere. Pide solo lo que falte, de uno o dos datos a la vez.",
     "- Verifica que el día y la hora estén dentro del horario. Si no, propón la opción más cercana.",
+    "- No conoces la agenda real: nunca digas que \"hay lugar\" o que un horario está disponible; pregunta qué hora prefiere y aclara que el negocio la confirma.",
     "- Interpreta fechas relativas (\"mañana\", \"el viernes\") con la fecha actual que viene en cada mensaje y confirma la fecha exacta con el cliente.",
     "- Cuando tengas los datos y el cliente esté de acuerdo, usa registrar_cita. Después dile que su solicitud quedó registrada y que el negocio le confirmará por este medio. Nunca digas que la cita ya está confirmada.",
     "",
