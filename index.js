@@ -612,7 +612,22 @@ app.get("/setup-webhook", async (req, res) => {
 const DEMO_LIMITE_DIA = Number(process.env.DEMO_LIMITE_DIA || 300);
 let demoUso = { dia: "", mensajes: 0 };
 
-app.get("/demo", (_req, res) => res.sendFile(path.join(__dirname, "demo.html")));
+const escHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// El nombre del negocio va en el HTML para que la vista previa del link
+// (Messenger, WhatsApp, Facebook) muestre "Así contestaría el WhatsApp de X".
+app.get("/demo", (req, res) => {
+  const c = CLIENTES[req.query.c || "demo-lf-salon"];
+  const nombre = c && c.tipo !== "ventas" ? c.nombre : "tu negocio";
+  const host = /^[\w.-]+(:\d+)?$/.test(req.get("host") || "") ? req.get("host") : "localhost";
+  const base = `${/^(localhost|127\.)/.test(host) ? "http" : "https"}://${host}`;
+  const html = fs.readFileSync(path.join(__dirname, "demo.html"), "utf8")
+    .replaceAll("{{NOMBRE}}", escHtml(nombre))
+    .replaceAll("{{BASE}}", base);
+  res.type("html").send(html);
+});
+
+app.get("/demo/logo.png", (_req, res) => res.sendFile(path.join(__dirname, "assets", "sitiolab-logo.png")));
 
 app.get("/demo/info", (req, res) => {
   const c = CLIENTES[req.query.c];
