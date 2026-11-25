@@ -160,5 +160,31 @@
   </section>
 </main>
 <footer>Sitiolab · Asistentes de IA para negocios · Propuesta preparada para {{NOMBRE}}</footer>
+<script>
+  // Avisa que alguien está viendo la propuesta (solo si lleva 3 s visible; las precargas no cuentan).
+  (function () {
+    const p = new URLSearchParams(location.search);
+    if (p.has("interno")) return;
+    let sesion;
+    try { sesion = sessionStorage.getItem("sesion-propuesta"); } catch {}
+    if (!sesion) {
+      sesion = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)).replace(/[^\w-]/g, "");
+      try { sessionStorage.setItem("sesion-propuesta", sesion); } catch {}
+    }
+    let enviado = false, t = null;
+    const intentar = () => {
+      clearTimeout(t);
+      if (enviado || document.visibilityState !== "visible") return;
+      t = setTimeout(() => {
+        if (enviado || document.visibilityState !== "visible") return;
+        enviado = true;
+        fetch("/demo/visto", { method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+          body: JSON.stringify({ c: "{{CLAVE}}", sesion, pagina: "propuesta" }) }).catch(() => {});
+      }, 3000);
+    };
+    document.addEventListener("visibilitychange", intentar);
+    intentar();
+  })();
+</script>
 </body>
 </html>

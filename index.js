@@ -620,7 +620,8 @@ app.get("/demo", (req, res) => {
   const clave = req.query.c || "demo-lf-salon";
   const c = CLIENTES[clave];
   const nombre = c && c.tipo !== "ventas" ? c.nombre : "tu negocio";
-  if (c && c.tipo !== "ventas") eventoDemo(req, "abrió la demo", clave);
+  // La visita NO se cuenta aquí: Facebook y Messenger precargan el link en los celulares
+  // sin que nadie lo abra. La página avisa a /demo/visto cuando de verdad se está viendo.
   const host = /^[\w.-]+(:\d+)?$/.test(req.get("host") || "") ? req.get("host") : "localhost";
   const base = `${/^(localhost|127\.)/.test(host) ? "http" : "https"}://${host}`;
   const html = fs.readFileSync(path.join(__dirname, "demo.html"), "utf8")
@@ -644,6 +645,25 @@ function eventoDemo(req, tipo, c, extra = {}) {
   console.log(`DEMO_EVENTO ${JSON.stringify(reg)}`);
 }
 
+// POST /demo/visto {c, sesion, pagina: "demo"|"propuesta"}
+// Lo manda la página cuando lleva unos segundos visible en pantalla. Las precargas de
+// Facebook/Messenger y los robots no ejecutan esto (o la página nunca queda visible).
+const vistosRecientes = new Map(); // `${c}:${sesion}:${pagina}` -> hora
+app.post("/demo/visto", (req, res) => {
+  const { c, sesion, pagina } = req.body || {};
+  const cliente = CLIENTES[c];
+  if (!cliente || cliente.tipo === "ventas" || !/^[\w-]{8,64}$/.test(sesion || "")) return res.status(400).end();
+  const que = pagina === "propuesta" ? "propuesta" : "demo";
+  const llave = `${c}:${sesion}:${que}`;
+  const ahora = Date.now();
+  if (ahora - (vistosRecientes.get(llave) || 0) > 30 * 60 * 1000) {
+    vistosRecientes.set(llave, ahora);
+    if (vistosRecientes.size > 5000) vistosRecientes.clear();
+    eventoDemo(req, que === "propuesta" ? "abrió la propuesta" : "abrió la demo", c, { sesion: sesion.slice(0, 8) });
+  }
+  res.status(204).end();
+});
+
 // GET /admin/demo-actividad?token=...  (últimos eventos de las demos)
 app.get("/admin/demo-actividad", (req, res) => {
   if (!process.env.ADMIN_TOKEN) return res.status(403).json({ error: "Define ADMIN_TOKEN para usar este endpoint" });
@@ -656,7 +676,6 @@ app.get("/propuesta", (req, res) => {
   const clave = String(req.query.c || "");
   const c = CLIENTES[clave];
   if (!c || c.tipo === "ventas") return res.status(404).type("text").send("Propuesta no encontrada");
-  eventoDemo(req, "abrió la propuesta", clave);
   const d = c.datos || {};
   const partes = [d.servicios?.length ? "servicios" : null, d.horario ? "horarios" : null, d.direccion ? "dirección" : null, "teléfono"].filter(Boolean);
   const detalle = `Tus ${partes.slice(0, -1).join(", ")} y ${partes.at(-1)}, y las reglas de tu negocio (qué hacer con urgencias, cómo agendar, qué no prometer).`;

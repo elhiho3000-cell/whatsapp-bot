@@ -314,6 +314,25 @@
     chat.style.scrollBehavior = "auto"; chat.scrollTop = 0; chat.style.scrollBehavior = ""; // que se vea la presentación
   }
 
+  // Cuenta la visita solo cuando la página lleva 3 s visible: así no cuentan las
+  // precargas que hacen Facebook/Messenger en los celulares sin que nadie abra el link.
+  function avisarVisto() {
+    if (interno) return;
+    let enviado = false, t = null;
+    const intentar = () => {
+      clearTimeout(t);
+      if (enviado || document.visibilityState !== "visible") return;
+      t = setTimeout(() => {
+        if (enviado || document.visibilityState !== "visible") return;
+        enviado = true;
+        fetch("/demo/visto", { method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+          body: JSON.stringify({ c: cliente, sesion, pagina: "demo" }) }).catch(() => {});
+      }, 3000);
+    };
+    document.addEventListener("visibilitychange", intentar);
+    intentar();
+  }
+
   fetch("/demo/info?c=" + encodeURIComponent(cliente)).then((r) => r.ok ? r.json() : Promise.reject()).then((info) => {
     NOMBRE = info.nombre;
     document.getElementById("nombre").textContent = info.nombre;
@@ -321,6 +340,7 @@
     document.getElementById("inicial").textContent = (info.nombre.trim()[0] || "·").toUpperCase();
     if (Array.isArray(info.sugerencias) && info.sugerencias.length) SUGERENCIAS = info.sugerencias;
     inicio();
+    avisarVisto();
   }).catch(() => {
     document.getElementById("nombre").textContent = "Demo no encontrada";
     nota("No encontramos esta demo. Revisa que el link esté completo.", "aviso");
