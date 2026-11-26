@@ -33,6 +33,8 @@ function vet(nombre, datos) {
   };
 }
 
+const vetHmo = (nombre, datos) => ({ ...vet(nombre, datos), zonaHoraria: "America/Hermosillo" });
+
 module.exports = {
   // ── Hermosillo ──
   "demo-lf-salon": {
@@ -206,4 +208,84 @@ module.exports = {
     servicios: ["Consulta veterinaria", "Cirugía y esterilización", "Spa, baño y estética", "Limpieza dental"],
     extra: "No tenemos el horario publicado: si preguntan, ofrece que la clínica lo confirme o que llamen al teléfono.",
   }),
+
+  // ── Hermosillo: lote 1 ──
+  "hmo-econo-pets": vetHmo("Hospital Veterinario Econo Pet's", {
+    direccion: "Av. De Las Flores 122, Hermosillo, Sonora",
+    horario: "abierto las 24 horas, todos los días",
+    telefono: "662-201-2211",
+    servicios: ["Consulta veterinaria", "Urgencias las 24 horas (intoxicaciones, accidentes)", "Análisis clínicos", "Cirugía", "Vacunación y desparasitación"],
+    formasDePago: "efectivo y tarjeta",
+  }),
+
+  "hmo-figvet": vetHmo("FigVet Veterinaria", {
+    direccion: "Calle Gral. José María Yáñez 180, col. San Benito, Hermosillo, Sonora",
+    horario: "abierto las 24 horas, todos los días",
+    telefono: "662-210-0909",
+    servicios: ["Consulta veterinaria", "Urgencias las 24 horas", "Radiografías", "Tratamientos y seguimiento", "Vacunación y desparasitación"],
+  }),
+
+  "hmo-ysaac-martinez": vetHmo("Hospital Veterinario J. Ysaac Martínez y Estética Canina", {
+    direccion: "Calle José González 487, col. Benito Juárez, Hermosillo, Sonora",
+    horario: "todos los días de 8am a 12 de la noche",
+    telefono: "662-250-1122",
+    servicios: ["Consulta veterinaria", "Urgencias", "Hospitalización", "Estética canina", "Vacunación y desparasitación"],
+  }),
+
+  "hmo-bienestar-animal": vetHmo("Clínica Veterinaria Bienestar Animal", {
+    direccion: "Av. San Luis Potosí 24, Centro, Hermosillo, Sonora",
+    horario: "lunes a sábado de 7am a 11pm, domingos de 7am a 10pm",
+    telefono: "662-225-4206",
+    servicios: ["Consulta veterinaria", "Urgencias", "Ultrasonido y análisis", "Hospitalización", "Cirugía", "Certificados y apoyo para viajar con mascotas"],
+  }),
+
+  "hmo-petxpress": vetHmo("Petxpress Hospital Veterinario", {
+    direccion: "Calle Benito Juárez 352, local 6, col. Bugambilia, Hermosillo, Sonora",
+    horario: "abierto las 24 horas, todos los días",
+    telefono: "662-279-1887",
+    servicios: ["Consulta veterinaria", "Urgencias las 24 horas", "Ultrasonido", "Estética para mascotas", "Vacunación y desparasitación"],
+  }),
+
+  "hmo-mundo-knino": vetHmo("Hospital Veterinario Mundo Knino", {
+    direccion: "Calle Olivares 240, col. Olivares, Hermosillo, Sonora",
+    horario: "lunes a viernes de 9am a 7:30pm, sábados de 9am a 7pm, domingos cerrado",
+    telefono: "662-153-2401",
+    servicios: ["Consulta veterinaria", "Chequeos generales", "Esterilización", "Curaciones", "Vacunación y desparasitación"],
+  }),
+
+  "hmo-monzalvo": vetHmo("Monzalvo Hospital Veterinario Morelos", {
+    direccion: "Blvd. José María Morelos y Pavón 74, col. Constitución, Hermosillo, Sonora",
+    horario: "lunes a viernes de 8am a 6pm, sábados de 8am a 5pm, domingos cerrado",
+    telefono: "662-214-5025",
+    servicios: ["Consulta veterinaria", "Valoración y cirugía de castración", "Diagnóstico", "Vacunación y desparasitación"],
+  }),
+
+  "hmo-sams-vet": vetHmo("Sam's Veterinarios", {
+    direccion: "Blvd. José María Morelos 150, col. ISSSTE Federal, Hermosillo, Sonora",
+    horario: "lunes a sábado de 8am a 7pm, domingos cerrado",
+    telefono: "662-215-8989",
+    servicios: ["Consulta veterinaria", "Radiografías y ultrasonido", "Asesoría de alimentación y suplementos", "Vacunación y desparasitación"],
+  }),
+
+  "hmo-selazer": {
+    tipo: "citas",
+    demo: true,
+    nombre: "Selazer Centro",
+    zonaHoraria: "America/Hermosillo",
+    sugerencias: ["Hola, ¿qué horario tienen?", "¿Cuánto cuesta la depilación láser de axilas?", "Quiero agendar una limpieza facial", "Quiero hablar con una persona"],
+    datos: {
+      giro: "centro de depilación láser y estética",
+      direccion: "Calle Benito Juárez 22, esquina con Av. Zacatecas, Centro, Hermosillo, Sonora",
+      horario: "lunes a viernes de 9am a 1pm y de 3 a 8pm, sábados de 9am a 3pm, domingos cerrado",
+      telefono: "662-404-1530",
+      servicios: ["Depilación láser", "Limpieza facial", "Masaje relajante de cuerpo completo"],
+      precios:
+        "No tenemos lista de precios publicada. El precio de la depilación láser depende de la zona y del número de sesiones: " +
+        "dile que en el centro se lo cotizan y ofrécele agendar una valoración.",
+      reglas: [
+        "No prometas cuántas sesiones necesita ni resultados exactos: eso se define en la valoración.",
+        "Si tiene una condición de piel, embarazo, irritación o quemadura, recomiéndale consultarlo con un dermatólogo o en su valoración antes de cualquier tratamiento.",
+      ],
+    },
+  },
 };
